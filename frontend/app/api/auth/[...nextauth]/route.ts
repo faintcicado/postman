@@ -70,7 +70,7 @@ const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       session.accessToken = token.accessToken as string;
-      session.user.email = token.email as string;
+      if (session.user) session.user.email = token.email as string;
       session.error = token.error as string | undefined;
       return session;
     },
