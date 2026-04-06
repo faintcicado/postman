@@ -1,10 +1,20 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
+from database import init_db
 from routers import digest, auth
 
-app = FastAPI(title="Postman API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
+
+
+app = FastAPI(title="Postman API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

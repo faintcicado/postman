@@ -27,6 +27,7 @@ You have metadata (subject, sender, snippet) for all emails. For some, you also 
 For each email return an item in the "emails" array:
 {{
   "id": "<email_id>",
+  "sender": "<human-readable sender name, e.g. 'GitHub', 'NYU Admissions', 'Mom' — infer from the from address, subject, and snippet>",
   "priority": "action_required" | "fyi" | "low",
   "summary": "<one sentence: what does this email say or want?>",
   "action": "<what the user should do, or null>",

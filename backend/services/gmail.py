@@ -1,10 +1,9 @@
 import base64
-from datetime import date
+from datetime import date, datetime, timezone
 
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 
-MAX_EMAILS = 20
 BODY_CHAR_LIMIT = 1500
 
 
@@ -28,17 +27,31 @@ def _decode_body(payload: dict) -> str:
     return ""
 
 
+def _format_date(internal_date_ms: str) -> str:
+    dt = datetime.fromtimestamp(int(internal_date_ms) / 1000, tz=timezone.utc).astimezone()
+    return dt.strftime("%m/%d %H:%M")
+
+
 def fetch_todays_emails(access_token: str) -> list[dict]:
-    """Return metadata-only dicts (no body) for today's unread emails."""
+    """Return metadata-only dicts (no body) for all of today's unread emails."""
     service = _build_service(access_token)
     today = date.today().strftime("%Y/%m/%d")
     query = f"after:{today} is:unread"
 
-    result = service.users().messages().list(userId="me", q=query, maxResults=MAX_EMAILS).execute()
-    messages = result.get("messages", [])
+    all_messages = []
+    page_token = None
+    while True:
+        kwargs = {"userId": "me", "q": query}
+        if page_token:
+            kwargs["pageToken"] = page_token
+        result = service.users().messages().list(**kwargs).execute()
+        all_messages.extend(result.get("messages", []))
+        page_token = result.get("nextPageToken")
+        if not page_token:
+            break
 
     emails = []
-    for msg in messages:
+    for msg in all_messages:
         full = service.users().messages().get(
             userId="me", id=msg["id"], format="full"
         ).execute()
@@ -48,6 +61,7 @@ def fetch_todays_emails(access_token: str) -> list[dict]:
             "id": full["id"],
             "subject": headers.get("Subject", "(no subject)"),
             "from": headers.get("From", ""),
+            "date": _format_date(full.get("internalDate", "0")),
             "snippet": full.get("snippet", ""),
         })
 

@@ -10,9 +10,10 @@ const GROUP_TITLES: Record<Priority, string> = {
 interface Props {
   priority: Priority;
   emails: EmailDigest[];
+  onArchive: (email: EmailDigest) => void;
 }
 
-export function PriorityGroup({ priority, emails }: Props) {
+export function PriorityGroup({ priority, emails, onArchive }: Props) {
   if (emails.length === 0) return null;
 
   return (
@@ -22,7 +23,7 @@ export function PriorityGroup({ priority, emails }: Props) {
       </h2>
       <div className="flex flex-col gap-3">
         {emails.map((email) => (
-          <DigestCard key={email.id} email={email} />
+          <DigestCard key={email.id} email={email} onArchive={onArchive} />
         ))}
       </div>
     </section>
