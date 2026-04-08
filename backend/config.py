@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +11,13 @@ class Settings(BaseSettings):
     database_url: str
     redis_url: str
     allowed_origins: str = "http://localhost:3000"
+
+    @field_validator("database_url")
+    @classmethod
+    def ensure_asyncpg(cls, v: str) -> str:
+        if v.startswith("postgresql://") or v.startswith("postgres://"):
+            return v.replace("://", "+asyncpg://", 1)
+        return v
 
     @property
     def origins(self) -> list[str]:
