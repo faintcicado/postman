@@ -2,6 +2,8 @@
 
 An AI-powered email triage app that connects to your Gmail inbox and uses Claude to produce a prioritized daily digest — surfacing what needs attention before you open a single email.
 
+**Live demo:** [postman-hazel.vercel.app](https://postman-hazel.vercel.app)
+
 ## Architecture
 
 ```
@@ -31,7 +33,7 @@ An AI-powered email triage app that connects to your Gmail inbox and uses Claude
 | Auth     | NextAuth.js + Google OAuth    |
 | Database | PostgreSQL                    |
 | Cache    | Redis                         |
-| Deploy   | Vercel + Railway              |
+| Deploy   | Vercel (frontend) + Railway (backend, DB, cache) |
 
 ## How It Works
 
@@ -123,26 +125,33 @@ Google OAuth setup: enable the Gmail API and add `https://www.googleapis.com/aut
 ```
 postman/
 ├── backend/
-│   ├── main.py               # FastAPI app
+│   ├── main.py               # FastAPI app + CORS middleware
 │   ├── config.py             # Pydantic settings (reads from env)
+│   ├── database.py           # Async SQLAlchemy setup
 │   ├── routers/
-│   │   ├── digest.py         # POST /digest
-│   │   └── auth.py           # POST /auth/verify
+│   │   ├── digest.py         # POST /digest, GET /digest/history
+│   │   └── auth.py           # Token verification helpers
 │   ├── services/
 │   │   ├── gmail.py          # Gmail API client
-│   │   ├── claude.py         # Two-turn Claude pipeline
+│   │   ├── claude.py         # Two-turn Claude prompt pipeline
 │   │   └── cache.py          # Redis helpers
 │   ├── models/
 │   │   └── digest.py         # SQLAlchemy models
+│   ├── Procfile              # Railway start command
 │   └── requirements.txt
 └── frontend/
     ├── app/
-    │   ├── page.tsx           # Digest dashboard
+    │   ├── page.tsx           # Digest dashboard (main view)
+    │   ├── history/page.tsx   # Past digests from PostgreSQL
+    │   ├── archived/page.tsx  # Locally archived emails
     │   ├── layout.tsx
-    │   └── api/auth/          # NextAuth route
+    │   ├── providers.tsx      # NextAuth SessionProvider
+    │   └── api/auth/          # NextAuth Google OAuth route
     ├── components/
     │   ├── DaySummary.tsx     # Hero summary banner
     │   ├── PriorityGroup.tsx  # Grouped email list
     │   └── DigestCard.tsx     # Per-email card
+    ├── lib/
+    │   └── archive.ts         # LocalStorage archive helpers
     └── package.json
 ```
